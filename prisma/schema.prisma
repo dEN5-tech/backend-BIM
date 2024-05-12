@@ -1,8 +1,8 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Enhance your student communication platform with Prisma's efficient data handling.
+// For more information on how Prisma can accelerate your application, visit: https://pris.ly/cli/accelerate-init
 
 generator client {
   provider = "prisma-client-js"
@@ -13,29 +13,33 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// User model represents a student or participant in the communication platform.
 model User {
   id       Int       @id @default(autoincrement())
   email    String    @unique
-  name     String?
+  name     String
   password String
-  chats    Chat[]    @relation("UserChats")
-  messages Message[] @relation("UserMessages")
+  avatar   String
+  chats    Chat[]    @relation("UserChats") // List of chats the user is part of.
+  messages Message[] @relation("UserMessages") // Messages sent by the user.
 }
 
+// Chat model represents a conversation between two or more users.
 model Chat {
   id       Int       @id @default(autoincrement())
-  users    User[]    @relation("UserChats")
-  messages Message[]
+  users    User[]    @relation("UserChats") // Users participating in the chat.
+  messages Message[] // Messages exchanged in the chat.
 }
 
+// Message model represents a single message in a chat, which can be text, image, or document.
 model Message {
   id        Int      @id @default(autoincrement())
-  content   String
-  createdAt DateTime @default(now())
+  content   String   // Text content of the message.
+  createdAt DateTime @default(now()) // Timestamp when the message was created.
   chatId    Int
-  chat      Chat     @relation(fields: [chatId], references: [id])
+  chat      Chat     @relation(fields: [chatId], references: [id]) // Chat to which the message belongs.
   userId    Int
-  user      User     @relation("UserMessages", fields: [userId], references: [id])
-  image     String? // URL to the image, if applicable
-  document  String? // URL to the document, if applicable
+  user      User     @relation("UserMessages", fields: [userId], references: [id]) // User who sent the message.
+  image     String?  // Optional URL to an image included in the message.
+  document  String?  // Optional URL to a document included in the message.
 }

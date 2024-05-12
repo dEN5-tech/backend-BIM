@@ -9,5 +9,3 @@ import { PrismaModule } from '../prisma/prisma.module';
   controllers: [ChatController],
 })
 export class ChatModule {}
-
-

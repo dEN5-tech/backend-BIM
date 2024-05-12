@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export class UserService {
   constructor(private prismaService: PrismaService) {}
 
-  async createUser(userData: { email: string; name?: string }) {
+  async createUser(userData: { email: string; name: string; password: string; avatar: string }) {
     return this.prismaService.user.create({
       data: userData,
     });
@@ -14,6 +14,17 @@ export class UserService {
   async getUserById(userId: number) {
     return this.prismaService.user.findUnique({
       where: { id: userId },
+    });
+  }
+
+  
+  async getUserByNameIncludes(substring: string) {
+    return this.prismaService.user.findMany({
+      where: {
+        name: {
+          contains: substring.toLowerCase(),
+        },
+      },
     });
   }
 
@@ -30,3 +41,4 @@ export class UserService {
     });
   }
 }
+

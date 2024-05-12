@@ -1,38 +1,70 @@
 import { PrismaClient } from '@prisma/client';
+import { faker } from '@faker-js/faker';
 const prisma = new PrismaClient();
 
 async function main() {
+  await prisma.$executeRaw`SET FOREIGN_KEY_CHECKS = 0;`;
+  await prisma.$executeRaw`TRUNCATE TABLE User;`;
+  await prisma.$executeRaw`TRUNCATE TABLE Chat;`;
+  await prisma.$executeRaw`TRUNCATE TABLE Message;`;
+  await prisma.$executeRaw`SET FOREIGN_KEY_CHECKS = 1;`;
   // Seed Users
+  const users = [];
   for (let i = 0; i < 10; i++) {
-    await prisma.user.create({
-      data: {
-        email: `user${i}@example.com`,
-        name: `User${i}`,
-      },
-    });
+    const user = {
+      email: faker.internet.email(),
+      name: faker.internet.userName(),
+      password: faker.internet.password(),
+      avatar: faker.image.avatar(),
+    };
+    users.push(user);
   }
+  await prisma.user.createMany({
+    data: users,
+  });
 
-  // Seed Chats
-  for (let i = 0; i < 5; i++) {
-    await prisma.chat.create({
-      data: {
+  // Seed Chats and Messages using logic similar to ChatService and ChatController
+  for (let i = 0; i < users.length; i += 2) {
+    const user1Id = i + 1;
+    const user2Id = i + 2;
+    let chat = await prisma.chat.findFirst({
+      where: {
         users: {
-          connect: [{ id: 2 * i + 1 }, { id: 2 * i + 2 }],
-        },
-      },
+          every: {
+            OR: [
+              { id: user1Id },
+              { id: user2Id }
+            ]
+          }
+        }
+      }
     });
-  }
 
-  // Seed Messages
-  for (let i = 0; i < 20; i++) {
+    if (!chat) {
+      chat = await prisma.chat.create({
+        data: {
+          users: {
+            connect: [{ id: user1Id }, { id: user2Id }]
+          }
+        }
+      });
+    }
+
+    // Create messages between the two users
     await prisma.message.create({
       data: {
-        content: `Message content ${i}`,
-        chatId: (i % 5) + 1,
-        userId: (i % 10) + 1,
-        image: i % 3 === 0 ? `http://example.com/image${i}.jpg` : null,
-        document: i % 4 === 0 ? `http://example.com/doc${i}.pdf` : null,
-      },
+        content: `Hello from ${users[user1Id-1].name} to ${users[user2Id-1].name}`,
+        chatId: chat.id,
+        userId: user1Id,
+      }
+    });
+
+    await prisma.message.create({
+      data: {
+        content: `Hello from ${users[user2Id-1].name} to ${users[user1Id-1].name}`,
+        chatId: chat.id,
+        userId: user2Id,
+      }
     });
   }
 }

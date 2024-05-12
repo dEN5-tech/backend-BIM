@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, ParseIntPipe, Query } from '@nestjs/common';
 import { UserService } from './user.service';
 
 @Controller('user')
@@ -6,13 +6,13 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
-  async createUser(@Body() userData: { email: string; name?: string }) {
+  async createUser(@Body() userData: { email: string; name: string; password: string; avatar: string }) {
     return this.userService.createUser(userData);
   }
 
-  @Get(':id')
-  async getUserById(@Param('id', ParseIntPipe) userId: number) {
-    return this.userService.getUserById(userId);
+  @Get('search')
+  async getUserByNameIncludes(@Query('nameIncludes') nameIncludes: string) {
+    return this.userService.getUserByNameIncludes(nameIncludes);
   }
 
   @Put(':id')
