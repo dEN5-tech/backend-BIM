@@ -14,25 +14,31 @@ import { EventsService } from './events/events.service';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { AuthModule } from './auth/auth.module';
+import { ProjectsModule } from './projects/projects.module';
+import { ProjectsController } from './projects/projects.controller';
+import { ProjectsService } from './projects/projects.service';
 
 @Module({
   imports: [PrismaModule,
     FilesModule,
     UserModule,
     EventsModule,
-    AuthModule
+    AuthModule,
+    ProjectsModule
   ], // Added UserModule to imports
   controllers: [
     AppController,
     UserController,
     ChatController,
     EventsController,
-    AuthController
+    AuthController,
+    ProjectsController
   ], // Added UserController to controllers array
   providers: [AppService,
      UserService,
       ChatService, 
       EventsService,
-    AuthService], // Added UserService to providers
+    AuthService,
+  ProjectsService], // Added UserService to providers
 })
 export class AppModule {}
