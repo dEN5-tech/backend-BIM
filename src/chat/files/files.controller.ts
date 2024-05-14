@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, ParseIntPipe, UploadedFiles, HttpCode, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, ParseIntPipe, UploadedFiles, HttpCode, BadRequestException, UseGuards } from '@nestjs/common';
 import { FilesService } from './files.service';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { UseInterceptors, UploadedFile } from '@nestjs/common';
+import { AuthGuard } from 'src/guards/auth.guard';
 
 
+@UseGuards(AuthGuard)
 @Controller('files')
 export class FilesController {
   constructor(private readonly filesService: FilesService) {}

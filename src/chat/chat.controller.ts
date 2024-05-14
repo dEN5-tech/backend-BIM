@@ -1,6 +1,9 @@
-import { Controller, Get, Param, Post, Body, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, ParseIntPipe, UseGuards } from '@nestjs/common';
 import { ChatService } from './chat.service';
+import { AuthGuard } from 'src/guards/auth.guard';
 
+
+@UseGuards(AuthGuard)
 @Controller('chats')
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
@@ -23,12 +26,20 @@ export class ChatController {
     return this.chatService.getChatByUsersSentFromTo(from, to);
   }
 
-  @Post('messages')
-  async sendMessage(
-    @Body() messageData: { userId: number, receiverId: number, content: string, image?: string, document?: string }
-  ) {
-    // Assuming you need to initiate a chat first or find an existing one
-    const chat = await this.chatService.initiateChat(messageData.userId, messageData.receiverId);
-    return this.chatService.createMessage(chat.id, messageData.userId, messageData.content, messageData.image, messageData.document);
-  }
+
+@Post('messages')
+async sendMessage(
+  @Body() messageData: { senderId: number, receiverId: number, content: string, image?: string, document?: string }
+) {
+  // Assuming you need to initiate a chat first or find an existing one
+  const chat = await this.chatService.initiateChat(messageData.senderId, messageData.receiverId);
+  return this.chatService.createMessage(
+    chat.id, 
+    messageData.senderId,
+    messageData.receiverId,
+    messageData.content, 
+    messageData.image, 
+    messageData.document
+  );
+}
 }

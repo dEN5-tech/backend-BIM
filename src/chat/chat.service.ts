@@ -6,7 +6,7 @@ import { Chat, Message } from '@prisma/client';
 export class ChatService {
   constructor(private prisma: PrismaService) {}
 
-  // Получить чат по идентификатору
+  // Get a chat by its ID
   async getChatById(id: number): Promise<Chat | null> {
     return this.prisma.chat.findUnique({
       where: { id },
@@ -17,7 +17,9 @@ export class ChatService {
     });
   }
 
-  // Получить все чаты
+
+
+  // Get all chats
   async getAllChats(): Promise<Chat[]> {
     return this.prisma.chat.findMany({
       include: {
@@ -27,7 +29,7 @@ export class ChatService {
     });
   }
 
-  // Инициировать чат между двумя пользователями
+  // Initiate a chat between two users
   async initiateChat(user1Id: number, user2Id: number): Promise<Chat> {
     let chat = await this.prisma.chat.findFirst({
       where: {
@@ -54,42 +56,24 @@ export class ChatService {
     return chat;
   }
 
-  // Получить чат по идентификаторам пользователей, которые отправили сообщения друг другу
-  async getChatByUsersSentFromTo(from: number, to: number) {
+  // Get a chat by user IDs where one has sent messages to the other
+  async getChatByUsersSentFromTo(senderId: number, receiverId: number){
     const chat = await this.prisma.chat.findFirst({
       where: {
         messages: {
           some: {
             OR: [
-              { userId: from, chat: { users: { some: { id: to } } } },
-              { userId: to, chat: { users: { some: { id: from } } } },
+              { senderId: senderId, receiverId: receiverId },
+              { senderId: receiverId, receiverId: senderId },
             ],
           },
         },
       },
       include: {
-        users: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            password: true,
-            avatar: true,
-          }
-        },
+        users: true,
         messages: {
-          select: {
-            id: true,
-            content: true,
-            image: true,
-            document: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
-                avatar: true,
-              }
-            }
+          include: {
+            sender: true,
           }
         },
       },
@@ -108,28 +92,29 @@ export class ChatService {
       })),
       messages: chat.messages.map(message => ({
         id: message.id,
+        user: {
+          id: message.sender.id,
+          name: message.sender.name,
+          avatar: message.sender.avatar,
+        },
         content: message.content,
         image: message.image,
         document: message.document,
-        user: {
-          id: message.user.id,
-          name: message.user.name,
-          avatar: message.user.avatar,
-        },
       })),
     };
   }
 
-  // Создать сообщение
-  async createMessage(chatId: number, userId: number, content: string, image?: string, document?: string): Promise<Message> {
-    return this.prisma.message.create({
-      data: {
-        content,
-        userId,
-        chatId,
-        image,
-        document,
-      },
-    });
-  }
+  // Create a message with a sender and receiver
+async createMessage(chatId: number, senderId: number, receiverId: number, content: string, image?: string, document?: string): Promise<Message> {
+  return this.prisma.message.create({
+    data: {
+      content,
+      senderId,  // Correct field name as per schema
+      receiverId, // Correct field name as per schema
+      chatId,
+      image,
+      document,
+    },
+  });
+}
 }

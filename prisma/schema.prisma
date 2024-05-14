@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Enhance your student communication platform with Prisma's efficient data handling.
-// For more information on how Prisma can accelerate your application, visit: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -15,13 +9,19 @@ datasource db {
 
 // User model represents a student or participant in the communication platform.
 model User {
-  id       Int       @id @default(autoincrement())
-  email    String    @unique
-  name     String
-  password String
-  avatar   String
-  chats    Chat[]    @relation("UserChats") // List of chats the user is part of.
-  messages Message[] @relation("UserMessages") // Messages sent by the user.
+  id               Int            @id @default(autoincrement())
+  email            String         @unique
+  name             String
+  password         String
+  avatar           String
+  chats            Chat[]         @relation("UserChats")
+  sentMessages     Message[]      @relation("UserSentMessages")
+  receivedMessages Message[]      @relation("UserReceivedMessages")
+  attendedEvents   Event[]        @relation("EventsUsers")
+  projects         Project[]      @relation("UserProjects")
+  comments         Comment[]      @relation("UserComments")
+  EventsUsers      EventsUsers[]
+  UserProjects     UserProjects[]
 }
 
 // Chat model represents a conversation between two or more users.
@@ -33,13 +33,85 @@ model Chat {
 
 // Message model represents a single message in a chat, which can be text, image, or document.
 model Message {
+  id         Int      @id @default(autoincrement())
+  content    String
+  createdAt  DateTime @default(now())
+  chatId     Int
+  chat       Chat     @relation(fields: [chatId], references: [id])
+  senderId   Int
+  sender     User     @relation("UserSentMessages", fields: [senderId], references: [id])
+  receiverId Int
+  receiver   User     @relation("UserReceivedMessages", fields: [receiverId], references: [id])
+  image      String?
+  document   String?
+}
+
+model Event {
+  id          Int           @id @default(autoincrement())
+  title       String
+  description String
+  date        DateTime
+  attendees   User[]        @relation("EventsUsers")
+  EventsUsers EventsUsers[]
+}
+
+// Project model represents a project that users can participate in.
+model Project {
+  id           Int            @id @default(autoincrement())
+  name         String
+  description  String
+  startDate    DateTime
+  endDate      DateTime
+  users        User[]         @relation("UserProjects")
+  images       Image[]
+  documents    Document[]
+  comments     Comment[]
+  UserProjects UserProjects[]
+}
+
+// Image model represents an image associated with a project.
+model Image {
+  id        Int     @id @default(autoincrement())
+  url       String
+  projectId Int
+  project   Project @relation(fields: [projectId], references: [id])
+}
+
+// Document model represents a document associated with a project.
+model Document {
+  id        Int     @id @default(autoincrement())
+  url       String
+  projectId Int
+  project   Project @relation(fields: [projectId], references: [id])
+}
+
+// Comment model represents a comment on a project.
+model Comment {
   id        Int      @id @default(autoincrement())
-  content   String   // Text content of the message.
-  createdAt DateTime @default(now()) // Timestamp when the message was created.
-  chatId    Int
-  chat      Chat     @relation(fields: [chatId], references: [id]) // Chat to which the message belongs.
+  content   String
+  createdAt DateTime @default(now())
+  projectId Int
+  project   Project  @relation(fields: [projectId], references: [id])
   userId    Int
-  user      User     @relation("UserMessages", fields: [userId], references: [id]) // User who sent the message.
-  image     String?  // Optional URL to an image included in the message.
-  document  String?  // Optional URL to a document included in the message.
+  user      User     @relation("UserComments", fields: [userId], references: [id])
+}
+
+// Pivot table for many-to-many relationship between Event and User
+model EventsUsers {
+  event   Event @relation(fields: [eventId], references: [id])
+  eventId Int
+  user    User  @relation(fields: [userId], references: [id])
+  userId  Int
+
+  @@id([eventId, userId])
+}
+
+// Pivot table for many-to-many relationship between Project and User
+model UserProjects {
+  project   Project @relation(fields: [projectId], references: [id])
+  projectId Int
+  user      User    @relation(fields: [userId], references: [id])
+  userId    Int
+
+  @@id([projectId, userId])
 }

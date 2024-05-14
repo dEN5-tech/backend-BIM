@@ -7,7 +7,10 @@ async function main() {
   await prisma.$executeRaw`TRUNCATE TABLE User;`;
   await prisma.$executeRaw`TRUNCATE TABLE Chat;`;
   await prisma.$executeRaw`TRUNCATE TABLE Message;`;
+  await prisma.$executeRaw`TRUNCATE TABLE Event;`;
+  await prisma.$executeRaw`TRUNCATE TABLE EventsUsers;`;
   await prisma.$executeRaw`SET FOREIGN_KEY_CHECKS = 1;`;
+
   // Seed Users
   const users = [];
   for (let i = 0; i < 10; i++) {
@@ -23,49 +26,72 @@ async function main() {
     data: users,
   });
 
-  // Seed Chats and Messages using logic similar to ChatService and ChatController
-  for (let i = 0; i < users.length; i += 2) {
-    const user1Id = i + 1;
-    const user2Id = i + 2;
-    let chat = await prisma.chat.findFirst({
-      where: {
+  // Retrieve all users to ensure correct IDs are used
+  const createdUsers = await prisma.user.findMany();
+
+  // Seed Chats and Messages
+  for (let i = 0; i < createdUsers.length; i += 2) {
+    if (i + 1 >= createdUsers.length) break; // Prevent out-of-bounds error
+
+    const user1 = createdUsers[i];
+    const user2 = createdUsers[i + 1];
+
+    let chat = await prisma.chat.create({
+      data: {
         users: {
-          every: {
-            OR: [
-              { id: user1Id },
-              { id: user2Id }
-            ]
-          }
+          connect: [{ id: user1.id }, { id: user2.id }]
         }
       }
     });
-
-    if (!chat) {
-      chat = await prisma.chat.create({
-        data: {
-          users: {
-            connect: [{ id: user1Id }, { id: user2Id }]
-          }
-        }
-      });
-    }
 
     // Create messages between the two users
     await prisma.message.create({
       data: {
-        content: `Hello from ${users[user1Id-1].name} to ${users[user2Id-1].name}`,
+        content: `Hello from ${user1.name} to ${user2.name}`,
         chatId: chat.id,
-        userId: user1Id,
+        senderId: user1.id,
+        receiverId: user2.id,
       }
     });
 
     await prisma.message.create({
       data: {
-        content: `Hello from ${users[user2Id-1].name} to ${users[user1Id-1].name}`,
+        content: `Hello from ${user2.name} to ${user1.name}`,
         chatId: chat.id,
-        userId: user2Id,
+        senderId: user2.id,
+        receiverId: user1.id,
       }
     });
+  }
+
+  // Seed Events and EventsUsers
+  const events = [];
+  for (let i = 0; i < 5; i++) {
+    const event = {
+      title: faker.lorem.sentence(),
+      description: faker.lorem.paragraph(),
+      date: faker.date.future(),
+    };
+    events.push(event);
+  }
+  await prisma.event.createMany({
+    data: events,
+  });
+
+  // Retrieve all events
+  const createdEvents = await prisma.event.findMany();
+
+  // Randomly assign users to events
+  for (const event of createdEvents) {
+    const attendees = faker.helpers.shuffle(createdUsers).slice(0, faker.datatype.number({ min: 1, max: createdUsers.length }));
+    for (const attendee of attendees) {
+      await prisma.eventsUsers.create({
+        data: {
+          eventId: event.id,
+          userId: attendee.id,
+        }
+      });
+    }
   }
 }
 

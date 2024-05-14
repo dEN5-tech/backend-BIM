@@ -8,11 +8,31 @@ import { FilesModule } from './chat/files/files.module';
 import { UserModule } from './user/user.module'; // Added UserModule import
 import { ChatController } from './chat/chat.controller'; // Added ChatController import
 import { ChatService } from './chat/chat.service'; // Added ChatService import
+import { EventsController } from './events/events.controller';
+import { EventsModule } from './events/events.module';
+import { EventsService } from './events/events.service';
+import { AuthController } from './auth/auth.controller';
+import { AuthService } from './auth/auth.service';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
-  imports: [PrismaModule, FilesModule, UserModule], // Added UserModule to imports
-  controllers: [AppController, UserController, ChatController], // Added UserController to controllers array
-  providers: [AppService, UserService, ChatService], // Added UserService to providers
+  imports: [PrismaModule,
+    FilesModule,
+    UserModule,
+    EventsModule,
+    AuthModule
+  ], // Added UserModule to imports
+  controllers: [
+    AppController,
+    UserController,
+    ChatController,
+    EventsController,
+    AuthController
+  ], // Added UserController to controllers array
+  providers: [AppService,
+     UserService,
+      ChatService, 
+      EventsService,
+    AuthService], // Added UserService to providers
 })
 export class AppModule {}
-

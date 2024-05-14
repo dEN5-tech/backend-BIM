@@ -7,10 +7,11 @@ export class AppController {
 
 
   @Post('message')
-  async createMessage(@Body() messageData: { userId: number; chatId: number; content: string; image?: string; document?: string }) {
+  async createMessage(@Body() messageData: {chatId: number, senderId: number, receiverId: number, content: string, image?: string, document?: string}) {
     return this.appService.createMessage(messageData);
   }
 
+  
   @Get('message/:id')
   async getMessageById(@Param('id', ParseIntPipe) messageId: number) {
     return this.appService.getMessageById(messageId);

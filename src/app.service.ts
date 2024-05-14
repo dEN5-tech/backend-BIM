@@ -51,9 +51,18 @@ export class AppService {
     });
   }
 
-  async createMessage(data: { userId: number; chatId: number; content: string; image?: string; document?: string }) {
+
+  async createMessage(messageData: {chatId: number, senderId: number, receiverId: number, content: string, image?: string, document?: string}) {
+    const { chatId, senderId, receiverId, content, image, document } = messageData;
     return this.prisma.message.create({
-      data,
+      data: {
+        content,
+        senderId,
+        receiverId,
+        chatId,
+        image,
+        document,
+      },
     });
   }
 
